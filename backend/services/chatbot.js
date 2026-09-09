@@ -95,7 +95,11 @@ async function sendMyCard(phone) {
     student.cardUrl = cardUrl;
     await student.save();
   }
-  return meta.sendImage(phone, cardUrl, `🪪 Your Student Benefit Card\nCard ID: ${student.cardId}`);
+  // Card image as the header + body + Choose Service CTA.
+  return sendChooseService(phone, {
+    headerImageUrl: cardUrl,
+    bodyText: `🪪 *Your Student Benefit Card*\nCard ID: ${student.cardId}\n\nTap *Choose Service* for more options.`,
+  });
 }
 
 /** Use Card -> message with image header + scan CTA (opens web scanner). */
