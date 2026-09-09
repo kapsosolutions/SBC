@@ -513,3 +513,34 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* ---------- Plan cards with SVG backgrounds ---------- */
+.plan-card {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--color-black);
+}
+.plan-card.plan-silver {
+  background-image: url('/silver.svg');
+}
+.plan-card.plan-gold {
+  background-image: url('/gold.svg');
+}
+.plan-card.plan-platinum {
+  background-image: url('/platinium.svg');
+}
+/* Readability overlay so black text stays legible over the texture */
+.plan-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.74);
+}
+.plan-card .plan-card-body {
+  position: relative;
+  z-index: 1;
+}

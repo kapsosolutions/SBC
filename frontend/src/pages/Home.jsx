@@ -40,11 +40,13 @@ export default function Home() {
           <p className="muted body mt-8">Simple pricing. Cancel anytime.</p>
           <div className="grid grid-3 mt-24">
             {plans.map((p) => (
-              <div className="card" key={p.key}>
-                <div className="pill pill-black">{p.title}</div>
-                <div className="display mt-16" style={{ fontSize: 44 }}>₹{p.price}</div>
-                <p className="muted body mt-8">{p.description}</p>
-                <Link to="/register" className="btn btn-block mt-24">Select {p.title}</Link>
+              <div className={`card plan-card plan-${p.key}`} key={p.key}>
+                <div className="plan-card-body">
+                  <div className="pill pill-black">{p.title}</div>
+                  <div className="display mt-16" style={{ fontSize: 44 }}>₹{p.price}</div>
+                  <p className="muted body mt-8">{p.description}</p>
+                  <Link to="/register" className="btn btn-block mt-24">Select {p.title}</Link>
+                </div>
               </div>
             ))}
             {plans.length === 0 && <p className="muted">Plans loading…</p>}
