@@ -23,6 +23,7 @@ const bannerImage = (srcVar, visibleVar, alt) => ({
 const SERVICE_SELECT = {
   id: 'SERVICE_SELECT',
   title: 'Choose Service',
+  terminal: true,
   data: {
     welcome_banner: { type: 'string', __example__: 'iVBORw0KGgo' },
     has_welcome_banner: { type: 'boolean', __example__: true },
@@ -58,17 +59,44 @@ const SERVICE_SELECT = {
         required: true,
         'data-source': '${data.services}',
       },
+      // Register/Partners navigate in-flow (data_exchange); My Card / Use Card /
+      // Contact complete the flow instantly (handled in chat by the webhook).
       {
-        type: 'Footer',
-        label: 'Continue',
-        'on-click-action': {
-          name: 'data_exchange',
-          payload: { selected_service: '${form.selected_service}' },
+        type: 'Switch',
+        value: '${form.selected_service}',
+        cases: {
+          register: [dxFooter()],
+          partners: [dxFooter()],
+          mycard: [completeFooter()],
+          usecard: [completeFooter()],
+          contact: [completeFooter()],
+          default: [dxFooter()],
         },
       },
     ],
   },
 };
+
+function dxFooter() {
+  return {
+    type: 'Footer',
+    label: 'Continue',
+    'on-click-action': {
+      name: 'data_exchange',
+      payload: { selected_service: '${form.selected_service}' },
+    },
+  };
+}
+function completeFooter() {
+  return {
+    type: 'Footer',
+    label: 'Continue',
+    'on-click-action': {
+      name: 'complete',
+      payload: { intent: 'service', selected_service: '${form.selected_service}' },
+    },
+  };
+}
 
 const REGISTER = {
   id: 'REGISTER',
