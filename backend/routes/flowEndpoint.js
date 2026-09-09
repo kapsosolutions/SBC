@@ -80,7 +80,16 @@ function clearImageCache() {
 }
 
 const BANNER_KEYS = ['flow_welcome_banner', 'flow_register_banner', 'flow_plan_banner', 'flow_partners_banner'];
-const ICON_KEYS = ['icon_register', 'icon_mycard', 'icon_usecard', 'icon_partners', 'icon_contact'];
+const ICON_KEYS = [
+  'icon_register',
+  'icon_mycard',
+  'icon_usecard',
+  'icon_partners',
+  'icon_contact',
+  'icon_plan_silver',
+  'icon_plan_gold',
+  'icon_plan_platinum',
+];
 
 // Screen payload budget is ~240KB. Keep the banner high quality (~150KB) and
 // each square icon small (~10KB). base64 inflates ~33%, so target sub-limits.
@@ -175,11 +184,16 @@ async function screenRegister(phone, imgs) {
 async function screenPlans(imgs) {
   const banner = imgs.flow_plan_banner || '';
   const plans = await Plan.find({ active: true }).sort({ order: 1 }).lean();
-  const list = (plans.length ? plans : []).map((p) => ({
-    id: p.key,
-    title: `${p.title} — ₹${p.price}`,
-    description: p.description || '',
-  }));
+  const list = (plans.length ? plans : []).map((p) => {
+    const b64 = imgs[`icon_plan_${p.key}`];
+    const item = {
+      id: p.key,
+      title: `${p.title} — ₹${p.price}`,
+      description: p.description || '',
+    };
+    if (b64) item.image = b64;
+    return item;
+  });
   return {
     screen: 'PLAN_SELECT',
     data: {

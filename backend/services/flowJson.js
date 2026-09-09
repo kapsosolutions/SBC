@@ -141,6 +141,7 @@ const PLAN_SELECT = {
           id: { type: 'string' },
           title: { type: 'string' },
           description: { type: 'string' },
+          image: { type: 'string' },
         },
       },
       __example__: [

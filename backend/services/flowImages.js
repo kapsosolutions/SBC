@@ -22,6 +22,11 @@ const IMAGE_KEYS = [
   { key: 'icon_usecard', label: 'Service icon: Use Card', group: 'Service Icons' },
   { key: 'icon_partners', label: 'Service icon: Our Partners', group: 'Service Icons' },
   { key: 'icon_contact', label: 'Service icon: Contact', group: 'Service Icons' },
+
+  // Plan logos (square 1:1) shown in the plan-select radio list
+  { key: 'icon_plan_silver', label: 'Plan logo: Silver (1:1)', group: 'Plan Logos' },
+  { key: 'icon_plan_gold', label: 'Plan logo: Gold (1:1)', group: 'Plan Logos' },
+  { key: 'icon_plan_platinum', label: 'Plan logo: Platinum (1:1)', group: 'Plan Logos' },
 ];
 
 const KEY_SET = new Set(IMAGE_KEYS.map((k) => k.key));
