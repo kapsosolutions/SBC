@@ -37,7 +37,7 @@ router.post('/student/request-otp', async (req, res) => {
   if (!phone || phone.length < 10) return res.status(400).json({ error: 'Valid WhatsApp number required' });
 
   const code = String(Math.floor(100000 + Math.random() * 900000));
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // matches template "Expires in 10 minutes"
   await Otp.findOneAndUpdate(
     { phone },
     { phone, code, expiresAt, verified: false, attempts: 0 },
@@ -45,10 +45,17 @@ router.post('/student/request-otp', async (req, res) => {
   );
 
   try {
-    await meta.sendText(phone, `Your Student Benefit Card verification code is ${code}. It expires in 5 minutes.`);
+    // Use the approved WhatsApp Authentication template (delivers to any user).
+    await meta.sendAuthOtp(phone, code);
   } catch (e) {
-    console.error('[auth] OTP send failed:', e.message);
-    return res.status(502).json({ error: 'Could not send OTP on WhatsApp. Check the number.' });
+    console.error('[auth] OTP template send failed:', e.response?.data?.error?.message || e.message);
+    // Fallback to a plain text message (works only within a 24h session window).
+    try {
+      await meta.sendText(phone, `Your Student Benefit Card verification code is ${code}. It expires in 5 minutes.`);
+    } catch (e2) {
+      console.error('[auth] OTP text fallback failed:', e2.message);
+      return res.status(502).json({ error: 'Could not send OTP on WhatsApp. Check the number.' });
+    }
   }
   res.json({ ok: true, message: 'OTP sent on WhatsApp' });
 });

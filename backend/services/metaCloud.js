@@ -56,6 +56,41 @@ async function sendText(phone, text) {
   return data;
 }
 
+/**
+ * Send an OTP via the approved WhatsApp Authentication template.
+ * Authentication templates require the code in BOTH the body ({{1}}) and the
+ * copy-code URL button parameter. This delivers to users outside a 24h session.
+ * Template: sbc_verifycode (en_US).
+ */
+async function sendAuthOtp(phone, code) {
+  const { baseUrl } = cfg();
+  const name = process.env.OTP_TEMPLATE_NAME || 'sbc_verifycode';
+  const lang = process.env.OTP_TEMPLATE_LANG || 'en_US';
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: normalizePhone(phone),
+    type: 'template',
+    template: {
+      name,
+      language: { code: lang },
+      components: [
+        {
+          type: 'body',
+          parameters: [{ type: 'text', text: String(code) }],
+        },
+        {
+          type: 'button',
+          sub_type: 'url',
+          index: '0',
+          parameters: [{ type: 'text', text: String(code) }],
+        },
+      ],
+    },
+  };
+  const { data } = await api.post(`${baseUrl}/messages`, payload, { headers: authHeaders() });
+  return data;
+}
+
 async function sendImage(phone, link, caption) {
   const { baseUrl } = cfg();
   const payload = {
@@ -367,6 +402,7 @@ module.exports = {
   cfg,
   normalizePhone,
   sendText,
+  sendAuthOtp,
   sendImage,
   sendButtons,
   sendCtaUrl,
