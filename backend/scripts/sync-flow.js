@@ -9,6 +9,16 @@ async function syncOne(label, flowId, json) {
     console.warn(`⚠️  ${label} flow id not set — skipping. Run: npm run flow:create`);
     return 'missing';
   }
+  // Ensure the endpoint points at the current BACKEND_URL (e.g. Render, not ngrok).
+  const backendUrl = (process.env.BACKEND_URL || '').replace(/\/+$/, '');
+  if (backendUrl.startsWith('https://')) {
+    try {
+      await meta.setFlowEndpoint(flowId, `${backendUrl}/api/flow-endpoint`);
+      console.log(`${label} endpoint -> ${backendUrl}/api/flow-endpoint`);
+    } catch (e) {
+      console.warn(`${label} setFlowEndpoint failed:`, e.response?.data?.error?.error_user_msg || e.message);
+    }
+  }
   const upd = await meta.updateFlowJSON(flowId, json);
   if (upd.validation_errors?.length) {
     console.log(`${label} validation_errors:`, JSON.stringify(upd.validation_errors, null, 2));

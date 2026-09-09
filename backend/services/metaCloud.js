@@ -335,6 +335,17 @@ async function publishFlow(flowId) {
   return data;
 }
 
+// Update a flow's data-exchange endpoint URI (e.g. when moving from ngrok to Render).
+async function setFlowEndpoint(flowId, endpointUri) {
+  const { graphRoot } = cfg();
+  const { data } = await api.post(
+    `${graphRoot}/${flowId}`,
+    { endpoint_uri: endpointUri },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
 async function getFlows() {
   const { graphRoot, wabaId } = cfg();
   const { data } = await api.get(`${graphRoot}/${wabaId}/flows`, { headers: authHeaders() });
@@ -365,6 +376,7 @@ module.exports = {
   createFlow,
   updateFlowJSON,
   publishFlow,
+  setFlowEndpoint,
   getFlows,
   uploadBusinessPublicKey,
 };
