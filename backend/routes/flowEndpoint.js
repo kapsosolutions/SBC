@@ -79,19 +79,43 @@ function clearImageCache() {
   imgCache = { data: null, ts: 0 };
 }
 
+const BANNER_KEYS = ['flow_welcome_banner', 'flow_register_banner', 'flow_plan_banner', 'flow_partners_banner'];
+const ICON_KEYS = ['icon_register', 'icon_mycard', 'icon_usecard', 'icon_partners', 'icon_contact'];
+
+// Screen payload budget is ~240KB. Keep the banner high quality (~150KB) and
+// each square icon small (~10KB). base64 inflates ~33%, so target sub-limits.
+const BANNER_OPTS = { width: 1400, height: 175, crop: 'fill', quality: 80, format: 'jpg' };
+const ICON_OPTS = { width: 130, height: 130, crop: 'fill', quality: 55, format: 'jpg' };
+
 async function loadImagesB64() {
   if (imgCache.data && Date.now() - imgCache.ts < IMG_TTL) return imgCache.data;
-  const keys = ['flow_welcome_banner', 'flow_register_banner', 'flow_plan_banner', 'flow_partners_banner'];
+  const keys = [...BANNER_KEYS, ...ICON_KEYS];
   const map = await flowImages.getMap(keys);
   const entries = await Promise.all(
     keys.map(async (k) => {
       const url = map[k];
       if (!url) return [k, ''];
-      return [k, await urlToBase64(url, { width: 1000, height: 125, crop: 'fill', quality: 70, format: 'jpg' })];
+      const opts = k.startsWith('icon_') ? ICON_OPTS : BANNER_OPTS;
+      return [k, await urlToBase64(url, opts)];
     })
   );
   imgCache = { data: Object.fromEntries(entries), ts: Date.now() };
   return imgCache.data;
+}
+
+// Map each service to its uploaded icon slot and attach the base64 image.
+const SERVICE_ICON = {
+  register: 'icon_register',
+  mycard: 'icon_mycard',
+  usecard: 'icon_usecard',
+  partners: 'icon_partners',
+  contact: 'icon_contact',
+};
+function withIcons(services, imgs) {
+  return services.map((s) => {
+    const b64 = imgs[SERVICE_ICON[s.id]];
+    return b64 ? { ...s, image: b64 } : s;
+  });
 }
 
 // ---------- Service catalogs ----------
@@ -131,7 +155,7 @@ async function handleInit(flowToken) {
       welcome_banner: banner,
       has_welcome_banner: !!banner,
       heading: 'Welcome to Student Benefit Card',
-      services: registered ? servicesForRegistered() : servicesForNewUser(),
+      services: withIcons(registered ? servicesForRegistered() : servicesForNewUser(), imgs),
     },
   };
 }
