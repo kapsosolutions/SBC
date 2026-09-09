@@ -222,21 +222,23 @@ export default function Register() {
             <p className="muted body mt-8">Pay securely to activate your Student Benefit Card.</p>
             <div className="stack mt-16">
               {plans.map((p) => (
-                <div className="card" key={p.key} style={{ padding: 16 }}>
-                  <div className="row between">
-                    <div>
-                      <b>{p.title}</b>
-                      <div className="caption">{p.description}</div>
+                <div className={`card plan-card plan-${p.key}`} key={p.key} style={{ padding: 16 }}>
+                  <div className="plan-card-body">
+                    <div className="row between">
+                      <div>
+                        <b>{p.title}</b>
+                        <div className="caption">{p.description}</div>
+                      </div>
+                      <div className="subheading">₹{p.price}</div>
                     </div>
-                    <div className="subheading">₹{p.price}</div>
+                    <button
+                      className="btn btn-primary btn-block mt-16"
+                      onClick={() => pay(p)}
+                      disabled={!!paying}
+                    >
+                      {paying === p.key ? 'Opening payment…' : `Pay ₹${p.price}`}
+                    </button>
                   </div>
-                  <button
-                    className="btn btn-primary btn-block mt-16"
-                    onClick={() => pay(p)}
-                    disabled={!!paying}
-                  >
-                    {paying === p.key ? 'Opening payment…' : `Pay ₹${p.price}`}
-                  </button>
                 </div>
               ))}
               {plans.length === 0 && <p className="muted">Loading plans…</p>}

@@ -549,7 +549,8 @@ img {
   z-index: 1;
 }
 /* Stronger text contrast over the vivid texture */
-.plan-card .muted {
+.plan-card .muted,
+.plan-card .caption {
   color: #1a1a1a;
   font-weight: 500;
 }
