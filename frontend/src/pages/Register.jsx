@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, saveToken } from '../api.js';
 
+function loadRazorpay() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
+
 export default function Register() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: phone+otp, 2: details
+  const [step, setStep] = useState(1); // 1: phone+otp, 2: details, 3: plan+pay
   const [form, setForm] = useState({
     phone: '',
     code: '',
@@ -12,17 +23,19 @@ export default function Register() {
     email: '',
     school: '',
     dob: '',
-    altPhone: '',
     password: '',
     confirmPassword: '',
   });
   const [otpSent, setOtpSent] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [paying, setPaying] = useState('');
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const pwMatch = form.password.length >= 6 && form.password === form.confirmPassword;
 
   const sendOtp = async () => {
     setError(''); setMsg(''); setLoading(true);
@@ -51,16 +64,67 @@ export default function Register() {
     }
   };
 
-  const submit = async () => {
+  // Create the (unregistered) account, then move to plan + payment.
+  const createAccount = async () => {
     setError(''); setMsg(''); setLoading(true);
     try {
       const res = await api.post('/api/auth/student/register', form);
       saveToken('student', res.token);
-      navigate('/dashboard');
+      const list = await api.get('/api/plans');
+      setPlans(Array.isArray(list) ? list : []);
+      setStep(3);
+      setMsg('Account created. Choose a plan and pay to activate your card.');
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Razorpay checkout for the selected plan.
+  const pay = async (plan) => {
+    setError(''); setPaying(plan.key);
+    try {
+      const ok = await loadRazorpay();
+      if (!ok) throw new Error('Could not load payment gateway. Check your connection.');
+      const order = await api.post('/api/payment/create-order', { planKey: plan.key }, 'student');
+
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: order.name,
+        description: `${order.planTitle} — Student Benefit Card`,
+        prefill: order.prefill,
+        theme: { color: '#000000' },
+        handler: async (resp) => {
+          try {
+            await api.post(
+              '/api/payment/verify',
+              {
+                razorpay_order_id: resp.razorpay_order_id,
+                razorpay_payment_id: resp.razorpay_payment_id,
+                razorpay_signature: resp.razorpay_signature,
+              },
+              'student'
+            );
+            navigate('/dashboard');
+          } catch (e) {
+            setError(e.message || 'Payment verification failed');
+            setPaying('');
+          }
+        },
+        modal: { ondismiss: () => setPaying('') },
+      });
+      rzp.on('payment.failed', (r) => {
+        setError(r.error?.description || 'Payment failed');
+        setPaying('');
+      });
+      rzp.open();
+    } catch (e) {
+      setError(e.message);
+      setPaying('');
     }
   };
 
@@ -101,9 +165,7 @@ export default function Register() {
                 <button className="btn btn-primary btn-block" onClick={verifyOtp} disabled={loading || !form.code}>
                   {loading ? 'Verifying…' : 'Verify & continue'}
                 </button>
-                <button className="btn btn-block mt-8" onClick={sendOtp} disabled={loading}>
-                  Resend OTP
-                </button>
+                <button className="btn btn-block mt-8" onClick={sendOtp} disabled={loading}>Resend OTP</button>
               </>
             )}
           </div>
@@ -138,13 +200,47 @@ export default function Register() {
             <div className="field">
               <label className="label">Confirm Password</label>
               <input type="password" className="input" value={form.confirmPassword} onChange={set('confirmPassword')} />
+              {form.confirmPassword && !pwMatch && (
+                <div className="caption" style={{ color: '#b30000' }}>
+                  {form.password.length < 6 ? 'Password must be 6+ characters' : 'Passwords do not match'}
+                </div>
+              )}
             </div>
-            <button className="btn btn-primary btn-block" onClick={submit} disabled={loading}>
-              {loading ? 'Creating…' : 'Create account'}
+            <button
+              className="btn btn-primary btn-block"
+              onClick={createAccount}
+              disabled={loading || !form.name || !pwMatch}
+            >
+              {loading ? 'Creating…' : 'Continue'}
             </button>
-            <p className="caption mt-16">
-              After signing up, open WhatsApp and send “hi” to pick a plan and pay to activate your card.
-            </p>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="mt-24">
+            <h2 className="subheading">Choose your plan</h2>
+            <p className="muted body mt-8">Pay securely to activate your Student Benefit Card.</p>
+            <div className="stack mt-16">
+              {plans.map((p) => (
+                <div className="card" key={p.key} style={{ padding: 16 }}>
+                  <div className="row between">
+                    <div>
+                      <b>{p.title}</b>
+                      <div className="caption">{p.description}</div>
+                    </div>
+                    <div className="subheading">₹{p.price}</div>
+                  </div>
+                  <button
+                    className="btn btn-primary btn-block mt-16"
+                    onClick={() => pay(p)}
+                    disabled={!!paying}
+                  >
+                    {paying === p.key ? 'Opening payment…' : `Pay ₹${p.price}`}
+                  </button>
+                </div>
+              ))}
+              {plans.length === 0 && <p className="muted">Loading plans…</p>}
+            </div>
           </div>
         )}
 
