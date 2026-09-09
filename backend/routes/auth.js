@@ -36,6 +36,15 @@ router.post('/student/request-otp', async (req, res) => {
   const phone = meta.normalizePhone(req.body?.phone);
   if (!phone || phone.length < 10) return res.status(400).json({ error: 'Valid WhatsApp number required' });
 
+  // Block re-registration if a web account already exists for this number.
+  const existing = await Student.findOne({ phone });
+  if (existing && existing.passwordHash) {
+    return res.status(409).json({
+      error: 'You are already registered. Please log in.',
+      alreadyRegistered: true,
+    });
+  }
+
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // matches template "Expires in 10 minutes"
   await Otp.findOneAndUpdate(
@@ -93,6 +102,9 @@ router.post('/student/register', async (req, res) => {
   if (!otp || !otp.verified) return res.status(400).json({ error: 'Verify your WhatsApp number first' });
 
   let student = await Student.findOne({ phone });
+  if (student && student.passwordHash) {
+    return res.status(409).json({ error: 'You are already registered. Please log in.', alreadyRegistered: true });
+  }
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (student) {
