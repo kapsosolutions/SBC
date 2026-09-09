@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getToken } from '../../api.js';
-
-const BASE = import.meta.env.VITE_API_BASE || '';
+import { api } from '../../api.js';
 
 export default function PartnersTab() {
   const [partners, setPartners] = useState([]);
@@ -26,13 +24,7 @@ export default function PartnersTab() {
       fd.append('description', form.description);
       fd.append('location', form.location);
       if (file) fd.append('image', file);
-      const res = await fetch(`${BASE}/api/partners`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken('admin')}` },
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
+      const data = await api.form('/api/partners', fd, 'admin');
       setCreds(data); // { username, password }
       setForm({ name: '', description: '', location: '' });
       setFile(null);

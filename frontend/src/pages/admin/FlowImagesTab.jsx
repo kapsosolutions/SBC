@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getToken } from '../../api.js';
-
-const BASE = import.meta.env.VITE_API_BASE || '';
+import { api } from '../../api.js';
 
 export default function FlowImagesTab() {
   const [images, setImages] = useState([]);
@@ -18,12 +16,7 @@ export default function FlowImagesTab() {
     try {
       const fd = new FormData();
       fd.append('image', file);
-      const res = await fetch(`${BASE}/api/flow-images/${key}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken('admin')}` },
-        body: fd,
-      });
-      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+      await api.form(`/api/flow-images/${key}`, fd, 'admin');
       await load();
     } catch (e) {
       setError(e.message);

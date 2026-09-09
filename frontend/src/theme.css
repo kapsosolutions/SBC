@@ -326,12 +326,17 @@ a {
 .panel {
   display: grid;
   grid-template-columns: 240px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 .sidebar {
   background: var(--color-black);
   color: var(--color-white);
   padding: 24px 16px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 .sidebar .logo {
   color: var(--color-white);
@@ -353,15 +358,25 @@ a {
 .panel-main {
   padding: 32px;
   background: var(--color-white);
-  overflow: auto;
+  height: 100vh;
+  overflow-y: auto;
 }
 @media (max-width: 800px) {
   .panel {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
   .sidebar {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    height: auto;
+    position: static;
+    overflow: visible;
+  }
+  .panel-main {
+    height: auto;
+    overflow: visible;
   }
 }
