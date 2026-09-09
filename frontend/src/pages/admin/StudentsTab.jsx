@@ -7,7 +7,8 @@ export default function StudentsTab() {
   const [prize, setPrize] = useState({ title: '', detail: '' });
   const [error, setError] = useState('');
 
-  const load = () => api.get('/api/students', 'admin').then(setStudents).catch((e) => setError(e.message));
+  const load = () =>
+    api.get('/api/students', 'admin').then((d) => setStudents(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
 
   const addPrize = async () => {

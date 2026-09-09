@@ -11,7 +11,8 @@ export default function PartnersTab() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = () => api.get('/api/partners/all', 'admin').then(setPartners).catch((e) => setError(e.message));
+  const load = () =>
+    api.get('/api/partners/all', 'admin').then((d) => setPartners(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });

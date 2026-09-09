@@ -11,7 +11,7 @@ export default function PlansTab() {
   const load = () =>
     api.get('/api/plans/all', 'admin').then((list) => {
       const map = {};
-      for (const p of list) map[p.key] = p;
+      for (const p of Array.isArray(list) ? list : []) map[p.key] = p;
       setPlans(map);
     }).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);

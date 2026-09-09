@@ -1,4 +1,11 @@
-const BASE = import.meta.env.VITE_API_BASE || '';
+// API base:
+// - dev (localhost): '' so Vite proxies /api -> backend
+// - production: VITE_API_BASE if set, else fall back to the Render backend
+const isLocal =
+  typeof window !== 'undefined' &&
+  /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+const BASE =
+  import.meta.env.VITE_API_BASE || (isLocal ? '' : 'https://sbc-t47t.onrender.com');
 
 function tokenKey(role) {
   return `sbc_${role}_token`;
@@ -25,16 +32,24 @@ async function request(path, { method = 'GET', body, role, isForm } = {}) {
   }
   const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
   const text = await res.text();
-  let data = {};
+  let data;
+  let parseOk = true;
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
+    parseOk = false;
     data = { raw: text };
   }
   if (!res.ok) {
-    const err = new Error(data.error || data.message || `Request failed (${res.status})`);
+    const err = new Error(data?.error || data?.message || `Request failed (${res.status})`);
     err.status = res.status;
     err.data = data;
+    throw err;
+  }
+  if (!parseOk) {
+    // Got a non-JSON body on a 2xx (e.g. HTML index because API base is wrong).
+    const err = new Error('Unexpected non-JSON response from API');
+    err.status = res.status;
     throw err;
   }
   return data;

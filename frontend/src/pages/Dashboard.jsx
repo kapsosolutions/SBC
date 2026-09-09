@@ -18,7 +18,7 @@ export default function Dashboard() {
       setError(e.message);
       if (e.status === 401) navigate('/login');
     });
-    api.get('/api/students/me/usage', 'student').then(setUsage).catch(() => {});
+    api.get('/api/students/me/usage', 'student').then((d) => setUsage(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);
 
   if (error) return (<><Nav /><div className="container section"><div className="alert alert-error">{error}</div></div></>);

@@ -26,8 +26,8 @@ export default function PartnerPanel() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'customers') api.get('/api/partner-panel/customers', 'partner').then(setCustomers).catch(() => {});
-    if (tab === 'usage') api.get('/api/partner-panel/usage', 'partner').then(setUsage).catch(() => {});
+    if (tab === 'customers') api.get('/api/partner-panel/customers', 'partner').then((d) => setCustomers(Array.isArray(d) ? d : [])).catch(() => {});
+    if (tab === 'usage') api.get('/api/partner-panel/usage', 'partner').then((d) => setUsage(Array.isArray(d) ? d : [])).catch(() => {});
   }, [tab]);
 
   const logout = () => { clearToken('partner'); navigate('/partner/login'); };

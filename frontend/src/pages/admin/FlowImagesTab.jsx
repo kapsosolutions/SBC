@@ -8,7 +8,8 @@ export default function FlowImagesTab() {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
-  const load = () => api.get('/api/flow-images', 'admin').then(setImages).catch((e) => setError(e.message));
+  const load = () =>
+    api.get('/api/flow-images', 'admin').then((d) => setImages(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
 
   const upload = async (key, file) => {

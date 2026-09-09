@@ -8,8 +8,8 @@ export default function Home() {
   const [partners, setPartners] = useState([]);
 
   useEffect(() => {
-    api.get('/api/plans').then(setPlans).catch(() => {});
-    api.get('/api/partners').then(setPartners).catch(() => {});
+    api.get('/api/plans').then((d) => setPlans(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/api/partners').then((d) => setPartners(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);
 
   return (
