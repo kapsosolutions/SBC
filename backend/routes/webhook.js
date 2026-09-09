@@ -112,7 +112,6 @@ async function handleFlowCompletion(from, payload) {
       $set: {
         phone,
         name: payload.student_name || '',
-        altPhone: payload.phone_number || '',
         school: payload.school || '',
         dob: payload.dob || '',
         plan: planKey,

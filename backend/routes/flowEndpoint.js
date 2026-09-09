@@ -297,7 +297,6 @@ async function handleDataExchange({ screen, data, flowToken }) {
         $set: {
           phone,
           name: data?.student_name || '',
-          altPhone: data?.phone_number || '',
           school: data?.school || '',
           dob: data?.dob || '',
           passwordHash,
@@ -323,7 +322,6 @@ async function handleDataExchange({ screen, data, flowToken }) {
       '| --- | --- |',
       `| Name | ${esc(student?.name)} |`,
       `| WhatsApp | ${esc(phone)} |`,
-      `| Phone | ${esc(student?.altPhone)} |`,
       `| School | ${esc(student?.school)} |`,
       `| DOB | ${esc(student?.dob)} |`,
       `| Plan | ${esc(plan ? plan.title : planKey)} |`,
@@ -334,7 +332,6 @@ async function handleDataExchange({ screen, data, flowToken }) {
       data: {
         details_table,
         student_name: student?.name || '',
-        phone_number: student?.altPhone || '',
         school: student?.school || '',
         dob: student?.dob || '',
         selected_plan: planKey,

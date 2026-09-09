@@ -124,10 +124,6 @@ export default function Register() {
               <input className="input" value={form.email} onChange={set('email')} />
             </div>
             <div className="field">
-              <label className="label">Phone Number</label>
-              <input className="input" value={form.altPhone} onChange={set('altPhone')} />
-            </div>
-            <div className="field">
               <label className="label">School / Institute</label>
               <input className="input" value={form.school} onChange={set('school')} />
             </div>

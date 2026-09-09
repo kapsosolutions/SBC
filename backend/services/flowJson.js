@@ -94,7 +94,6 @@ const REGISTER = {
         'init-value': '${data.whatsapp_number}',
         'helper-text': 'Linked to this chat (cannot be changed)',
       },
-      { type: 'TextInput', name: 'phone_number', label: 'Phone Number', required: true, 'input-type': 'phone' },
       { type: 'TextInput', name: 'school', label: 'School / Institute Name', required: true, 'input-type': 'text' },
       { type: 'DatePicker', name: 'dob', label: 'Date of Birth', required: true },
       {
@@ -106,21 +105,46 @@ const REGISTER = {
         'helper-text': 'Minimum 6 characters (used to log in on the website)',
       },
       { type: 'TextInput', name: 'confirm_password', label: 'Confirm Password', required: true, 'input-type': 'password' },
+      // Continue is enabled only when both passwords match. (Both are required,
+      // so the empty-empty case is still blocked by required validation.)
       {
-        type: 'Footer',
-        label: 'Continue',
-        'on-click-action': {
-          name: 'data_exchange',
-          payload: {
-            student_name: '${form.student_name}',
-            whatsapp_number: '${data.whatsapp_number}',
-            phone_number: '${form.phone_number}',
-            school: '${form.school}',
-            dob: '${form.dob}',
-            password: '${form.password}',
-            confirm_password: '${form.confirm_password}',
+        type: 'If',
+        condition: '${form.password} == ${form.confirm_password}',
+        then: [
+          {
+            type: 'Footer',
+            label: 'Continue',
+            'on-click-action': {
+              name: 'data_exchange',
+              payload: {
+                student_name: '${form.student_name}',
+                whatsapp_number: '${data.whatsapp_number}',
+                school: '${form.school}',
+                dob: '${form.dob}',
+                password: '${form.password}',
+                confirm_password: '${form.confirm_password}',
+              },
+            },
           },
-        },
+        ],
+        else: [
+          {
+            type: 'Footer',
+            label: 'Passwords must match',
+            enabled: false,
+            'on-click-action': {
+              name: 'data_exchange',
+              payload: {
+                student_name: '${form.student_name}',
+                whatsapp_number: '${data.whatsapp_number}',
+                school: '${form.school}',
+                dob: '${form.dob}',
+                password: '${form.password}',
+                confirm_password: '${form.confirm_password}',
+              },
+            },
+          },
+        ],
       },
     ],
   },
@@ -194,7 +218,6 @@ const CONFIRM = {
       ],
     },
     student_name: { type: 'string', __example__: 'John' },
-    phone_number: { type: 'string', __example__: '9000000000' },
     school: { type: 'string', __example__: 'ABC School' },
     dob: { type: 'string', __example__: '2005-01-01' },
     selected_plan: { type: 'string', __example__: 'gold' },
@@ -211,7 +234,6 @@ const CONFIRM = {
           payload: {
             intent: 'register_payment',
             student_name: '${data.student_name}',
-            phone_number: '${data.phone_number}',
             school: '${data.school}',
             dob: '${data.dob}',
             selected_plan: '${data.selected_plan}',
