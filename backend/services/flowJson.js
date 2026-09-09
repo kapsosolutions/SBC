@@ -23,7 +23,6 @@ const bannerImage = (srcVar, visibleVar, alt) => ({
 const SERVICE_SELECT = {
   id: 'SERVICE_SELECT',
   title: 'Choose Service',
-  terminal: true,
   data: {
     welcome_banner: { type: 'string', __example__: 'iVBORw0KGgo' },
     has_welcome_banner: { type: 'boolean', __example__: true },
@@ -63,8 +62,8 @@ const SERVICE_SELECT = {
         type: 'Footer',
         label: 'Continue',
         'on-click-action': {
-          name: 'complete',
-          payload: { intent: 'service', selected_service: '${form.selected_service}' },
+          name: 'data_exchange',
+          payload: { selected_service: '${form.selected_service}' },
         },
       },
     ],
@@ -318,33 +317,23 @@ const INFO = {
 
 // ---------- Flow builders ----------
 
-// Menu flow — single terminal screen that completes instantly on selection.
-function buildMenuFlowJSON() {
-  return {
-    version: '7.3',
-    data_api_version: '3.0',
-    routing_model: { SERVICE_SELECT: [] },
-    screens: [SERVICE_SELECT],
-  };
-}
-
-// Form flow — registration + plans + confirm, and partners browsing.
-// Entry screen is REGISTER; the PARTNERS_LIST edge keeps the graph connected
-// (we open PARTNERS_LIST directly via flow_action=navigate).
-function buildFormFlowJSON() {
+// Single "Choose Service" flow containing every screen. SERVICE_SELECT uses
+// data_exchange so the server navigates in-flow to Register / Plans / Partners.
+function buildFlowJSON() {
   return {
     version: '7.3',
     data_api_version: '3.0',
     routing_model: {
-      REGISTER: ['PLAN_SELECT', 'PARTNERS_LIST', 'INFO'],
+      SERVICE_SELECT: ['REGISTER', 'PARTNERS_LIST', 'INFO'],
+      REGISTER: ['PLAN_SELECT', 'INFO'],
       PLAN_SELECT: ['CONFIRM', 'INFO'],
       CONFIRM: [],
       PARTNERS_LIST: ['PARTNER_DETAILS', 'INFO'],
       PARTNER_DETAILS: [],
       INFO: [],
     },
-    screens: [REGISTER, PLAN_SELECT, CONFIRM, PARTNERS_LIST, PARTNER_DETAILS, INFO],
+    screens: [SERVICE_SELECT, REGISTER, PLAN_SELECT, CONFIRM, PARTNERS_LIST, PARTNER_DETAILS, INFO],
   };
 }
 
-module.exports = { buildMenuFlowJSON, buildFormFlowJSON };
+module.exports = { buildFlowJSON };

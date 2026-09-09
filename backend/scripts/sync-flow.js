@@ -1,44 +1,40 @@
-// Re-uploads flow JSON to the existing menu + form flows and republishes.
+// Re-uploads the single flow JSON to WHATSAPP_FLOW_ID, points its endpoint at
+// the current BACKEND_URL, and republishes.
 require('dotenv').config();
 const meta = require('../services/metaCloud');
-const { buildMenuFlowJSON, buildFormFlowJSON } = require('../services/flowJson');
+const { buildFlowJSON } = require('../services/flowJson');
 const { setKeys } = require('./_envFile');
 
-async function syncOne(label, flowId, json) {
-  if (!flowId) {
-    console.warn(`⚠️  ${label} flow id not set — skipping. Run: npm run flow:create`);
-    return 'missing';
-  }
-  // Ensure the endpoint points at the current BACKEND_URL (e.g. Render, not ngrok).
-  const backendUrl = (process.env.BACKEND_URL || '').replace(/\/+$/, '');
-  if (backendUrl.startsWith('https://')) {
-    try {
-      await meta.setFlowEndpoint(flowId, `${backendUrl}/api/flow-endpoint`);
-      console.log(`${label} endpoint -> ${backendUrl}/api/flow-endpoint`);
-    } catch (e) {
-      console.warn(`${label} setFlowEndpoint failed:`, e.response?.data?.error?.error_user_msg || e.message);
-    }
-  }
-  const upd = await meta.updateFlowJSON(flowId, json);
-  if (upd.validation_errors?.length) {
-    console.log(`${label} validation_errors:`, JSON.stringify(upd.validation_errors, null, 2));
-  }
-  let status = 'draft';
-  try {
-    await meta.publishFlow(flowId);
-    status = 'published';
-  } catch (e) {
-    console.warn(`${label} publish failed:`, e.response?.data?.error?.error_user_msg || e.message);
-  }
-  console.log(`✅ Synced ${label} ${flowId} (${status})`);
-  return status;
-}
-
 (async () => {
+  const flowId = process.env.WHATSAPP_FLOW_ID;
+  if (!flowId) {
+    console.error('WHATSAPP_FLOW_ID not set. Run: npm run flow:create');
+    process.exit(1);
+  }
   try {
-    const m = await syncOne('MENU', process.env.WHATSAPP_FLOW_ID, buildMenuFlowJSON());
-    const f = await syncOne('FORM', process.env.WHATSAPP_FORM_FLOW_ID, buildFormFlowJSON());
-    if (m === 'published' && f === 'published') setKeys({ WHATSAPP_FLOW_STATUS: 'published' });
+    const backendUrl = (process.env.BACKEND_URL || '').replace(/\/+$/, '');
+    if (backendUrl.startsWith('https://')) {
+      try {
+        await meta.setFlowEndpoint(flowId, `${backendUrl}/api/flow-endpoint`);
+        console.log(`endpoint -> ${backendUrl}/api/flow-endpoint`);
+      } catch (e) {
+        console.warn('setFlowEndpoint failed:', e.response?.data?.error?.error_user_msg || e.message);
+      }
+    }
+
+    const upd = await meta.updateFlowJSON(flowId, buildFlowJSON());
+    if (upd.validation_errors?.length) {
+      console.log('validation_errors:', JSON.stringify(upd.validation_errors, null, 2));
+    }
+    let status = 'draft';
+    try {
+      await meta.publishFlow(flowId);
+      status = 'published';
+    } catch (e) {
+      console.warn('publish failed:', e.response?.data?.error?.error_user_msg || e.message);
+    }
+    setKeys({ WHATSAPP_FLOW_STATUS: status });
+    console.log(`✅ Synced flow ${flowId} (${status})`);
   } catch (e) {
     console.error('❌ sync-flow failed:', e.response?.data || e.message);
     process.exit(1);

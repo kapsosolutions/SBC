@@ -49,39 +49,6 @@ async function sendChooseService(phone, opts = {}) {
   });
 }
 
-/**
- * Reopen a focused flow (Register or Partners) directly at its first screen
- * via flow_action=navigate, so the user doesn't see an intermediate screen.
- */
-async function sendServiceFlow(phone, service) {
-  const flowId = process.env.WHATSAPP_FORM_FLOW_ID;
-  if (!flowId) return sendChooseService(phone);
-  const fe = require('../routes/flowEndpoint');
-  const nav = await fe.getServiceNavScreen(service, phone);
-  if (!nav) return sendChooseService(phone);
-
-  const isRegister = service === 'register';
-  const headerImageUrl = isRegister
-    ? (await flowImages.getUrl('chat_welcome_header')) || undefined
-    : (await flowImages.getUrl('chat_welcome_header')) || undefined;
-
-  return meta.sendFlowMessage(phone, {
-    flowId,
-    flowCta: isRegister ? 'Register' : 'View Partners',
-    headerImageUrl,
-    headerText: headerImageUrl ? undefined : isRegister ? 'Register' : 'Our Partners',
-    bodyText: isRegister
-      ? '📝 Complete your registration to get your Student Benefit Card.'
-      : '🤝 Browse our partners and their offers.',
-    footerText: 'Student Benefit Card',
-    flowToken: `form_${meta.normalizePhone(phone)}`,
-    mode: flowMode(),
-    flowAction: 'navigate',
-    screen: nav.screen,
-    screenData: nav.data,
-  });
-}
-
 /** Send the member card (generate if needed). */
 async function sendMyCard(phone) {
   const student = await Student.findOne({ phone: meta.normalizePhone(phone) });
@@ -180,7 +147,6 @@ async function completeRegistration(phone, paymentRef) {
 
 module.exports = {
   sendChooseService,
-  sendServiceFlow,
   sendMyCard,
   sendUseCard,
   sendOfferRedeemed,

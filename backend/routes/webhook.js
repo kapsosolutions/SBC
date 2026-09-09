@@ -95,17 +95,7 @@ async function handleMessage(msg, value) {
  * For register_payment we save the student and send native payment.
  */
 async function handleFlowCompletion(from, payload) {
-  // Service selection completed the flow -> act in chat / reopen focused flow.
-  if (payload?.intent === 'service') {
-    const svc = payload.selected_service;
-    if (svc === 'mycard') return chatbot.sendMyCard(from);
-    if (svc === 'usecard') return chatbot.sendUseCard(from);
-    if (svc === 'contact') return chatbot.sendContact(from);
-    if (svc === 'register') return chatbot.sendServiceFlow(from, 'register');
-    if (svc === 'partners') return chatbot.sendServiceFlow(from, 'partners');
-    return chatbot.sendChooseService(from);
-  }
-
+  // Only the CONFIRM screen completes the flow (register + pay).
   if (payload?.intent !== 'register_payment') return;
   const phone = meta.normalizePhone(from);
 

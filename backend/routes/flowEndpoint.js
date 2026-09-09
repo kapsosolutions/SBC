@@ -147,14 +147,7 @@ function servicesForRegistered() {
 // ---------- Screen builders ----------
 async function handleInit(flowToken) {
   const phone = phoneFromToken(flowToken);
-  const isForm = String(flowToken || '').startsWith('form_');
   const imgs = await loadImagesB64();
-
-  // Form flow (opened via navigate) — INIT/BACK land on the Register screen.
-  if (isForm) {
-    return screenRegister(phone, imgs);
-  }
-
   const student = phone ? await Student.findOne({ phone }) : null;
   const registered = !!(student && student.registered);
   const banner = imgs.flow_welcome_banner || '';
@@ -259,9 +252,27 @@ async function handleDataExchange({ screen, data, flowToken }) {
   const phone = phoneFromToken(flowToken);
   const imgs = await loadImagesB64();
 
-  // NOTE: SERVICE_SELECT no longer sends data_exchange — its footer completes
-  // the menu flow and the webhook routes the selection (chat message or the
-  // focused Register/Partners flow), so there is no intermediate screen.
+  if (screen === 'SERVICE_SELECT') {
+    const svc = data?.selected_service;
+    if (svc === 'register') return screenRegister(phone, imgs);
+    if (svc === 'partners') return screenPartnersList(imgs);
+
+    // Terminal services: send the chat message, show a brief confirmation screen.
+    const chatbot = require('../services/chatbot');
+    if (svc === 'mycard') {
+      setImmediate(() => chatbot.sendMyCard(phone).catch(() => {}));
+      return { screen: 'INFO', data: { info_title: 'My Card', info_body: 'Your card has been sent to this chat 👇' } };
+    }
+    if (svc === 'usecard') {
+      setImmediate(() => chatbot.sendUseCard(phone).catch(() => {}));
+      return { screen: 'INFO', data: { info_title: 'Use Card', info_body: 'The scanner link has been sent to this chat 👇' } };
+    }
+    if (svc === 'contact') {
+      setImmediate(() => chatbot.sendContact(phone).catch(() => {}));
+      return { screen: 'INFO', data: { info_title: 'Contact', info_body: 'Contact details have been sent to this chat 👇' } };
+    }
+    return { screen: 'INFO', data: { info_title: 'Choose Service', info_body: 'Please pick a valid option.' } };
+  }
 
   if (screen === 'REGISTER') {
     const password = data?.password || '';
