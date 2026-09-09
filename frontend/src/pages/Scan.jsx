@@ -8,16 +8,18 @@ export default function Scan() {
   const phone = params.get('phone') || '';
   const presetPartner = params.get('partner') || '';
 
-  const [status, setStatus] = useState('idle'); // idle | scanning | done | error
+  const [status, setStatus] = useState('starting'); // starting | scanning | done | error
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [manualPhone, setManualPhone] = useState(phone);
   const scannerRef = useRef(null);
+  const busyRef = useRef(false);
   const regionId = 'qr-region';
 
-  const redeem = async (partnerRaw, ph) => {
+  const redeem = async (partnerRaw) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     try {
-      const res = await api.post('/api/scan/redeem', { phone: ph, partner: partnerRaw });
+      const res = await api.post('/api/scan/redeem', { phone, partner: partnerRaw });
       setResult(res);
       setStatus('done');
     } catch (e) {
@@ -36,9 +38,9 @@ export default function Scan() {
   };
 
   const startScanner = async () => {
-    setError(''); setResult(null); setStatus('scanning');
-    const ph = manualPhone.trim();
-    if (!ph) { setError('Enter your WhatsApp number first.'); setStatus('idle'); return; }
+    setError('');
+    setResult(null);
+    setStatus('scanning');
     try {
       const html5 = new Html5Qrcode(regionId);
       scannerRef.current = html5;
@@ -47,7 +49,7 @@ export default function Scan() {
         { fps: 10, qrbox: 250 },
         async (decodedText) => {
           await stopScanner();
-          redeem(decodedText, ph);
+          redeem(decodedText);
         },
         () => {}
       );
@@ -57,61 +59,41 @@ export default function Scan() {
     }
   };
 
-  // If partner is preset in URL (e.g. scanned via camera app), redeem directly once phone known.
   useEffect(() => {
+    if (presetPartner && phone) {
+      // Partner id already provided in the link -> redeem directly, no camera.
+      redeem(presetPartner);
+      return () => { stopScanner(); };
+    }
+    startScanner();
     return () => { stopScanner(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card card">
-        <div className="logo"><span className="logo-mark">S</span><span>Use Card</span></div>
-        <h1 className="heading-sm mt-16">Scan partner QR</h1>
-        <p className="muted body mt-8">Point your camera at the partner’s QR code to redeem an offer.</p>
-
-        {error && <div className="alert alert-error mt-16">{error}</div>}
+    <div style={{ minHeight: '100vh', background: 'var(--color-white)', display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div className="auth-card card" style={{ padding: 16 }}>
+        {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
         {status === 'done' && result && (
-          <div className="alert alert-ok mt-16">
+          <div className="alert alert-ok" style={{ marginBottom: 12 }}>
             ✅ Redeemed at <b>{result.partner}</b>. Used {result.count} / {result.limit}
             {typeof result.remaining === 'number' ? ` (${result.remaining} left)` : ''}.
           </div>
         )}
         {status === 'error' && result?.error === 'limit_reached' && (
-          <div className="alert alert-error mt-16">⚠️ {result.message}</div>
+          <div className="alert alert-error" style={{ marginBottom: 12 }}>⚠️ {result.message}</div>
         )}
 
-        <div className="field mt-16">
-          <label className="label">Your WhatsApp Number</label>
-          <input
-            className="input"
-            value={manualPhone}
-            onChange={(e) => setManualPhone(e.target.value)}
-            placeholder="919000000000"
-            disabled={status === 'scanning'}
-          />
-        </div>
+        {/* Camera view */}
+        <div
+          id={regionId}
+          style={{ width: '100%', minHeight: 300, borderRadius: 20, overflow: 'hidden', background: 'var(--color-fog)' }}
+        />
 
-        <div id={regionId} style={{ width: '100%', borderRadius: 16, overflow: 'hidden' }} />
-
-        {status !== 'scanning' ? (
-          <>
-            <button className="btn btn-primary btn-block mt-16" onClick={startScanner}>
-              Open scanner
-            </button>
-            {presetPartner && (
-              <button
-                className="btn btn-block mt-8"
-                onClick={() => redeem(presetPartner, manualPhone.trim())}
-                disabled={!manualPhone.trim()}
-              >
-                Redeem this partner
-              </button>
-            )}
-          </>
-        ) : (
-          <button className="btn btn-block mt-16" onClick={() => { stopScanner(); setStatus('idle'); }}>
-            Stop
+        {(status === 'done' || status === 'error') && (
+          <button className="btn btn-primary btn-block" style={{ marginTop: 12 }} onClick={startScanner}>
+            Scan again
           </button>
         )}
       </div>
