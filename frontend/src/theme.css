@@ -698,3 +698,11 @@ img {
   align-items: center;
   gap: 12px;
 }
+
+/* Clickable table rows */
+.clickable-row {
+  cursor: pointer;
+}
+.clickable-row:hover td {
+  background: var(--color-fog);
+}
