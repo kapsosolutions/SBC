@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
 import Modal from '../../components/Modal.jsx';
+import ImageUpload from '../../components/ImageUpload.jsx';
 
 export default function CategoriesTab() {
   const [cats, setCats] = useState([]);
@@ -102,7 +103,7 @@ export default function CategoriesTab() {
         </div>
         <div className="field">
           <label className="label">Category image (1:1 ratio)</label>
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
+          <ImageUpload file={file} onChange={setFile} aspect="1/1" hint="PNG or JPG, 1:1 ratio" />
         </div>
       </Modal>
     </div>

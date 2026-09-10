@@ -648,3 +648,53 @@ img {
   width: 34px;
   height: 34px;
 }
+
+/* ---------- Image uploader ---------- */
+.uploader-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.uploader {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  max-width: 100%;
+  border: 2px dashed var(--color-border);
+  border-radius: 20px;
+  background: var(--color-fog);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.uploader:hover {
+  border-color: var(--color-black);
+  background: #eee;
+}
+.uploader-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.uploader-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-smoke);
+  padding: 16px;
+  text-align: center;
+}
+.uploader-title {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--color-black);
+}
+.uploader-hint {
+  font-size: 12px;
+}
+.uploader-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
