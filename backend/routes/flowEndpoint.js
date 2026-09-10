@@ -225,13 +225,21 @@ async function screenPartnersList(imgs, categoryId) {
   const q = { active: true };
   if (categoryId && categoryId !== 'none') q.category = categoryId;
   const partners = await Partner.find(q).sort({ name: 1 }).limit(10).lean();
-  const list = partners.map((p) => ({
-    id: String(p._id),
-    title: p.name,
-    description: [p.offerPercent ? `${p.offerPercent}% off` : '', p.location || '']
-      .filter(Boolean)
-      .join(' • '),
-  }));
+  const list = await Promise.all(
+    partners.map(async (p) => {
+      const item = {
+        id: String(p._id),
+        title: p.name,
+        description: [p.offerPercent ? `${p.offerPercent}% off` : '', p.location || '']
+          .filter(Boolean)
+          .join(' • '),
+      };
+      if (p.imageUrl) {
+        item.image = await urlToBase64(p.imageUrl, { width: 130, height: 130, crop: 'fill', quality: 55, format: 'jpg' });
+      }
+      return item;
+    })
+  );
   return {
     screen: 'PARTNERS_LIST',
     data: {
