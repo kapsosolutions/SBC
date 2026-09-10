@@ -48,7 +48,7 @@ router.get('/all', auth('admin'), async (req, res) => {
 
 // Admin: create partner (auto-generates username + password)
 router.post('/', auth('admin'), upload.single('image'), async (req, res) => {
-  const { name, description, location, category, offerPercent } = req.body || {};
+  const { name, description, location, category, offerPercent, password } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Partner name required' });
 
   // Unique username
@@ -59,7 +59,8 @@ router.post('/', auth('admin'), upload.single('image'), async (req, res) => {
     i += 1;
     username = `${base}${i}`;
   }
-  const plainPassword = randPassword();
+  // Admin-provided password (min 4 chars) or an auto-generated one.
+  const plainPassword = password && String(password).length >= 4 ? String(password) : randPassword();
   const passwordHash = await bcrypt.hash(plainPassword, 10);
 
   let imageUrl = '';
