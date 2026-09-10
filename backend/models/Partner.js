@@ -8,6 +8,9 @@ const PartnerSchema = new mongoose.Schema(
     imageUrl: { type: String, default: '' }, // 1:1 ratio image
     imagePublicId: { type: String, default: '' },
 
+    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
+    offerPercent: { type: Number, default: 0 }, // discount % they provide
+
     // Auto-generated login credentials for the partner panel
     username: { type: String, required: true, unique: true, index: true },
     passwordHash: { type: String, required: true },

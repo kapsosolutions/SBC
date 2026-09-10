@@ -9,6 +9,7 @@ const { phoneFromToken } = require('../utils/helpers');
 const Student = require('../models/Student');
 const Plan = require('../models/Plan');
 const Partner = require('../models/Partner');
+const Category = require('../models/Category');
 const Redemption = require('../models/Redemption');
 
 // ---------- Key loading ----------
@@ -197,20 +198,46 @@ async function screenPlans(imgs) {
   };
 }
 
-async function screenPartnersList(imgs) {
+async function screenCategories(imgs) {
   const banner = imgs.flow_partners_banner || '';
-  const partners = await Partner.find({ active: true }).sort({ name: 1 }).limit(10).lean();
+  const cats = await Category.find({ active: true }).sort({ order: 1, name: 1 }).limit(10).lean();
+  const list = await Promise.all(
+    cats.map(async (c) => {
+      const item = { id: String(c._id), title: c.name, description: '' };
+      if (c.imageUrl) {
+        item.image = await urlToBase64(c.imageUrl, { width: 200, height: 200, crop: 'fill', quality: 60, format: 'jpg' });
+      }
+      return item;
+    })
+  );
+  return {
+    screen: 'CATEGORY_SELECT',
+    data: {
+      partners_banner: banner,
+      has_partners_banner: !!banner,
+      categories: list.length ? list : [{ id: 'none', title: 'No categories yet', description: 'Check back soon' }],
+    },
+  };
+}
+
+async function screenPartnersList(imgs, categoryId) {
+  const banner = imgs.flow_partners_banner || '';
+  const q = { active: true };
+  if (categoryId && categoryId !== 'none') q.category = categoryId;
+  const partners = await Partner.find(q).sort({ name: 1 }).limit(10).lean();
   const list = partners.map((p) => ({
     id: String(p._id),
     title: p.name,
-    description: p.location || p.description || '',
+    description: [p.offerPercent ? `${p.offerPercent}% off` : '', p.location || '']
+      .filter(Boolean)
+      .join(' • '),
   }));
   return {
     screen: 'PARTNERS_LIST',
     data: {
       partners_banner: banner,
       has_partners_banner: !!banner,
-      partners: list.length ? list : [{ id: 'none', title: 'No partners yet', description: 'Check back soon' }],
+      partners: list.length ? list : [{ id: 'none', title: 'No partners here', description: 'Try another category' }],
     },
   };
 }
@@ -231,6 +258,7 @@ async function screenPartnerDetails(partnerId, phone) {
     img = await urlToBase64(partner.imageUrl, { width: 300, height: 300, crop: 'fill', quality: 75, format: 'jpg' });
   }
   const body = [
+    partner.offerPercent ? `🎁 ${partner.offerPercent}% off for members` : '',
     partner.description || '',
     partner.location ? `📍 ${partner.location}` : '',
   ]
@@ -255,7 +283,7 @@ async function handleDataExchange({ screen, data, flowToken }) {
   if (screen === 'SERVICE_SELECT') {
     const svc = data?.selected_service;
     if (svc === 'register') return screenRegister(phone, imgs);
-    if (svc === 'partners') return screenPartnersList(imgs);
+    if (svc === 'partners') return screenCategories(imgs);
 
     // Terminal services: send the chat message, show a brief confirmation screen.
     const chatbot = require('../services/chatbot');
@@ -339,10 +367,18 @@ async function handleDataExchange({ screen, data, flowToken }) {
     };
   }
 
+  if (screen === 'CATEGORY_SELECT') {
+    const catId = data?.selected_category;
+    if (catId === 'none') {
+      return { screen: 'INFO', data: { info_title: 'Our Partners', info_body: 'No categories available yet.' } };
+    }
+    return screenPartnersList(imgs, catId);
+  }
+
   if (screen === 'PARTNERS_LIST') {
     const pid = data?.selected_partner;
     if (pid === 'none') {
-      return { screen: 'INFO', data: { info_title: 'Our Partners', info_body: 'No partners available yet.' } };
+      return { screen: 'INFO', data: { info_title: 'Our Partners', info_body: 'No partners in this category.' } };
     }
     return screenPartnerDetails(pid, phone);
   }
@@ -396,7 +432,7 @@ router.post('/', async (req, res) => {
 async function getServiceNavScreen(service, phone) {
   const imgs = await loadImagesB64();
   if (service === 'register') return screenRegister(phone, imgs);
-  if (service === 'partners') return screenPartnersList(imgs);
+  if (service === 'partners') return screenCategories(imgs);
   return null;
 }
 

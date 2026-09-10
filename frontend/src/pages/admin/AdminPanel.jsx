@@ -4,11 +4,13 @@ import { getToken, clearToken } from '../../api.js';
 import FlowImagesTab from './FlowImagesTab.jsx';
 import PlansTab from './PlansTab.jsx';
 import PartnersTab from './PartnersTab.jsx';
+import CategoriesTab from './CategoriesTab.jsx';
 import StudentsTab from './StudentsTab.jsx';
 
 const TABS = [
   { id: 'images', label: 'Flow Images' },
   { id: 'plans', label: 'Plans & Prices' },
+  { id: 'categories', label: 'Categories' },
   { id: 'partners', label: 'Partners' },
   { id: 'students', label: 'Students' },
 ];
@@ -43,6 +45,7 @@ export default function AdminPanel() {
       <main className="panel-main">
         {tab === 'images' && <FlowImagesTab />}
         {tab === 'plans' && <PlansTab />}
+        {tab === 'categories' && <CategoriesTab />}
         {tab === 'partners' && <PartnersTab />}
         {tab === 'students' && <StudentsTab />}
       </main>

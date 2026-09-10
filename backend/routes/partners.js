@@ -20,10 +20,13 @@ function randPassword() {
   return Math.random().toString(36).slice(-4) + Math.floor(1000 + Math.random() * 9000);
 }
 
-// Public: active partners list
+// Public: active partners list (optionally filter by category)
 router.get('/', async (req, res) => {
-  const partners = await Partner.find({ active: true })
-    .select('name description location imageUrl')
+  const q = { active: true };
+  if (req.query.category) q.category = req.query.category;
+  const partners = await Partner.find(q)
+    .select('name description location imageUrl category offerPercent')
+    .populate('category', 'name imageUrl')
     .sort({ name: 1 })
     .lean();
   res.json(partners);
@@ -31,7 +34,10 @@ router.get('/', async (req, res) => {
 
 // Admin: list all partners
 router.get('/all', auth('admin'), async (req, res) => {
-  const partners = await Partner.find({}).sort({ createdAt: -1 }).lean();
+  const partners = await Partner.find({})
+    .populate('category', 'name')
+    .sort({ createdAt: -1 })
+    .lean();
   res.json(
     partners.map((p) => ({
       ...p,
@@ -42,7 +48,7 @@ router.get('/all', auth('admin'), async (req, res) => {
 
 // Admin: create partner (auto-generates username + password)
 router.post('/', auth('admin'), upload.single('image'), async (req, res) => {
-  const { name, description, location } = req.body || {};
+  const { name, description, location, category, offerPercent } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Partner name required' });
 
   // Unique username
@@ -68,6 +74,8 @@ router.post('/', auth('admin'), upload.single('image'), async (req, res) => {
     name,
     description: description || '',
     location: location || '',
+    category: category || null,
+    offerPercent: Number(offerPercent) || 0,
     imageUrl,
     imagePublicId,
     username,
@@ -88,10 +96,12 @@ router.post('/', auth('admin'), upload.single('image'), async (req, res) => {
 router.put('/:id', auth('admin'), upload.single('image'), async (req, res) => {
   const partner = await Partner.findById(req.params.id);
   if (!partner) return res.status(404).json({ error: 'Not found' });
-  const { name, description, location, active } = req.body || {};
+  const { name, description, location, active, category, offerPercent } = req.body || {};
   if (name !== undefined) partner.name = name;
   if (description !== undefined) partner.description = description;
   if (location !== undefined) partner.location = location;
+  if (category !== undefined) partner.category = category || null;
+  if (offerPercent !== undefined) partner.offerPercent = Number(offerPercent) || 0;
   if (active !== undefined) partner.active = active === true || active === 'true';
   if (req.file) {
     if (partner.imagePublicId) await destroy(partner.imagePublicId).catch(() => {});

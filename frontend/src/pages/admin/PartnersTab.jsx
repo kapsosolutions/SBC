@@ -3,7 +3,8 @@ import { api } from '../../api.js';
 
 export default function PartnersTab() {
   const [partners, setPartners] = useState([]);
-  const [form, setForm] = useState({ name: '', description: '', location: '' });
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({ name: '', description: '', location: '', category: '', offerPercent: '' });
   const [file, setFile] = useState(null);
   const [creds, setCreds] = useState(null);
   const [error, setError] = useState('');
@@ -11,7 +12,10 @@ export default function PartnersTab() {
 
   const load = () =>
     api.get('/api/partners/all', 'admin').then((d) => setPartners(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get('/api/categories/all', 'admin').then((d) => setCategories(Array.isArray(d) ? d : [])).catch(() => {});
+  }, []);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -23,10 +27,12 @@ export default function PartnersTab() {
       fd.append('name', form.name);
       fd.append('description', form.description);
       fd.append('location', form.location);
+      fd.append('category', form.category);
+      fd.append('offerPercent', form.offerPercent || '0');
       if (file) fd.append('image', file);
       const data = await api.form('/api/partners', fd, 'admin');
       setCreds(data); // { username, password }
-      setForm({ name: '', description: '', location: '' });
+      setForm({ name: '', description: '', location: '', category: '', offerPercent: '' });
       setFile(null);
       load();
     } catch (e) {
@@ -80,6 +86,21 @@ export default function PartnersTab() {
             <input className="input" value={form.location} onChange={set('location')} />
           </div>
         </div>
+        <div className="grid grid-2">
+          <div className="field">
+            <label className="label">Category</label>
+            <select className="input" value={form.category} onChange={set('category')}>
+              <option value="">— Select category —</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="label">Offer % for members</label>
+            <input className="input" type="number" min="0" max="100" value={form.offerPercent} onChange={set('offerPercent')} />
+          </div>
+        </div>
         <div className="field">
           <label className="label">Description</label>
           <input className="input" value={form.description} onChange={set('description')} />
@@ -97,7 +118,7 @@ export default function PartnersTab() {
         <h2 className="subheading">All partners ({partners.length})</h2>
         <table className="table mt-16">
           <thead>
-            <tr><th>Logo</th><th>Name</th><th>Location</th><th>Username</th><th>Scans</th><th></th></tr>
+            <tr><th>Logo</th><th>Name</th><th>Category</th><th>Offer</th><th>Location</th><th>Username</th><th>Scans</th><th></th></tr>
           </thead>
           <tbody>
             {partners.map((p) => (
@@ -108,6 +129,8 @@ export default function PartnersTab() {
                   ) : '—'}
                 </td>
                 <td><b>{p.name}</b></td>
+                <td>{p.category?.name || '—'}</td>
+                <td>{p.offerPercent ? `${p.offerPercent}%` : '—'}</td>
                 <td>{p.location}</td>
                 <td>{p.username}</td>
                 <td>{p.totalRedemptions || 0}</td>

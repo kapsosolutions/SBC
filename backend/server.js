@@ -28,6 +28,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/flow-images', require('./routes/flowImages'));
 app.use('/api/plans', require('./routes/plans'));
 app.use('/api/partners', require('./routes/partners'));
+app.use('/api/categories', require('./routes/categories'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/scan', require('./routes/scan'));
 app.use('/api/partner-panel', require('./routes/partnerPanel'));

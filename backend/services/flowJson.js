@@ -272,6 +272,50 @@ const CONFIRM = {
   },
 };
 
+const CATEGORY_SELECT = {
+  id: 'CATEGORY_SELECT',
+  title: 'Categories',
+  data: {
+    partners_banner: { type: 'string', __example__: 'iVBORw0KGgo' },
+    has_partners_banner: { type: 'boolean', __example__: true },
+    categories: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          image: { type: 'string' },
+        },
+      },
+      __example__: [{ id: 'c1', title: 'Food & Cafe', description: 'Restaurants & cafes' }],
+    },
+  },
+  layout: {
+    type: 'SingleColumnLayout',
+    children: [
+      bannerImage('partners_banner', 'has_partners_banner', 'Categories'),
+      { type: 'TextHeading', text: 'Choose a category' },
+      {
+        type: 'RadioButtonsGroup',
+        name: 'selected_category',
+        label: 'Categories',
+        required: true,
+        'data-source': '${data.categories}',
+      },
+      {
+        type: 'Footer',
+        label: 'View partners',
+        'on-click-action': {
+          name: 'data_exchange',
+          payload: { selected_category: '${form.selected_category}' },
+        },
+      },
+    ],
+  },
+};
+
 const PARTNERS_LIST = {
   id: 'PARTNERS_LIST',
   title: 'Our Partners',
@@ -374,15 +418,16 @@ function buildFlowJSON() {
     version: '7.3',
     data_api_version: '3.0',
     routing_model: {
-      SERVICE_SELECT: ['REGISTER', 'PARTNERS_LIST', 'INFO'],
+      SERVICE_SELECT: ['REGISTER', 'CATEGORY_SELECT', 'INFO'],
       REGISTER: ['PLAN_SELECT', 'INFO'],
       PLAN_SELECT: ['CONFIRM', 'INFO'],
       CONFIRM: [],
+      CATEGORY_SELECT: ['PARTNERS_LIST', 'INFO'],
       PARTNERS_LIST: ['PARTNER_DETAILS', 'INFO'],
       PARTNER_DETAILS: [],
       INFO: [],
     },
-    screens: [SERVICE_SELECT, REGISTER, PLAN_SELECT, CONFIRM, PARTNERS_LIST, PARTNER_DETAILS, INFO],
+    screens: [SERVICE_SELECT, REGISTER, PLAN_SELECT, CONFIRM, CATEGORY_SELECT, PARTNERS_LIST, PARTNER_DETAILS, INFO],
   };
 }
 
