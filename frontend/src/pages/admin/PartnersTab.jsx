@@ -19,6 +19,15 @@ function EyeIcon({ off }) {
   );
 }
 
+function EditIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
 function TrashIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +46,7 @@ export default function PartnersTab() {
   const [showFormPw, setShowFormPw] = useState(false);
   const [file, setFile] = useState(null);
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState(null); // null = add mode
   const [creds, setCreds] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -55,6 +65,7 @@ export default function PartnersTab() {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const openAdd = () => {
+    setEditId(null);
     setForm({ name: '', description: '', location: '', category: '', offerPercent: '', password: DEFAULT_PW });
     setShowFormPw(false);
     setFile(null);
@@ -62,21 +73,42 @@ export default function PartnersTab() {
     setOpen(true);
   };
 
-  const create = async () => {
+  const openEdit = (p) => {
+    setEditId(p._id);
+    setForm({
+      name: p.name || '',
+      description: p.description || '',
+      location: p.location || '',
+      category: p.category?._id || p.category || '',
+      offerPercent: p.offerPercent || '',
+      password: '',
+    });
+    setShowFormPw(false);
+    setFile(null);
+    setError('');
+    setOpen(true);
+  };
+
+  const save = async () => {
     setError(''); setBusy(true);
     try {
       if (!form.name) throw new Error('Partner name required');
-      if (!form.password || form.password.length < 4) throw new Error('Password must be at least 4 characters');
       const fd = new FormData();
       fd.append('name', form.name);
       fd.append('description', form.description);
       fd.append('location', form.location);
       fd.append('category', form.category);
       fd.append('offerPercent', form.offerPercent || '0');
-      fd.append('password', form.password);
       if (file) fd.append('image', file);
-      const data = await api.form('/api/partners', fd, 'admin');
-      setCreds(data);
+
+      if (editId) {
+        await api.form(`/api/partners/${editId}`, fd, 'admin', 'PUT');
+      } else {
+        if (!form.password || form.password.length < 4) throw new Error('Password must be at least 4 characters');
+        fd.append('password', form.password);
+        const data = await api.form('/api/partners', fd, 'admin');
+        setCreds(data);
+      }
       setOpen(false);
       load();
     } catch (e) {
@@ -178,9 +210,14 @@ export default function PartnersTab() {
                 </td>
                 <td>{p.totalRedemptions || 0}</td>
                 <td>
-                  <button className="icon-btn danger" title="Delete partner" onClick={() => remove(p._id)}>
-                    <TrashIcon />
-                  </button>
+                  <span className="row" style={{ gap: 6 }}>
+                    <button className="icon-btn" title="Edit partner" onClick={() => openEdit(p)}>
+                      <EditIcon />
+                    </button>
+                    <button className="icon-btn danger" title="Delete partner" onClick={() => remove(p._id)}>
+                      <TrashIcon />
+                    </button>
+                  </span>
                 </td>
               </tr>
             ))}
@@ -193,13 +230,13 @@ export default function PartnersTab() {
 
       <Modal
         open={open}
-        title="Add partner"
+        title={editId ? 'Edit partner' : 'Add partner'}
         onClose={() => setOpen(false)}
         footer={
           <>
             <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={create} disabled={busy}>
-              {busy ? 'Creating…' : 'Create partner'}
+            <button className="btn btn-primary" onClick={save} disabled={busy}>
+              {busy ? 'Saving…' : editId ? 'Save changes' : 'Create partner'}
             </button>
           </>
         }
@@ -228,27 +265,29 @@ export default function PartnersTab() {
             <input className="input" type="number" min="0" max="100" value={form.offerPercent} onChange={set('offerPercent')} />
           </div>
         </div>
-        <div className="field">
-          <label className="label">Login password</label>
-          <div className="input-eye">
-            <input
-              className="input"
-              type={showFormPw ? 'text' : 'password'}
-              value={form.password}
-              onChange={set('password')}
-            />
-            <button type="button" className="icon-btn eye-inside" onClick={() => setShowFormPw((v) => !v)} title={showFormPw ? 'Hide' : 'Show'}>
-              <EyeIcon off={showFormPw} />
-            </button>
+        {!editId && (
+          <div className="field">
+            <label className="label">Login password</label>
+            <div className="input-eye">
+              <input
+                className="input"
+                type={showFormPw ? 'text' : 'password'}
+                value={form.password}
+                onChange={set('password')}
+              />
+              <button type="button" className="icon-btn eye-inside" onClick={() => setShowFormPw((v) => !v)} title={showFormPw ? 'Hide' : 'Show'}>
+                <EyeIcon off={showFormPw} />
+              </button>
+            </div>
+            <div className="caption">Default is <b>{DEFAULT_PW}</b> — change it if you like.</div>
           </div>
-          <div className="caption">Default is <b>{DEFAULT_PW}</b> — change it if you like.</div>
-        </div>
+        )}
         <div className="field">
           <label className="label">Description</label>
           <input className="input" value={form.description} onChange={set('description')} />
         </div>
         <div className="field">
-          <label className="label">Logo / image (1:1 ratio)</label>
+          <label className="label">Logo / image (1:1 ratio){editId ? ' — leave empty to keep current' : ''}</label>
           <ImageUpload file={file} onChange={setFile} aspect="1/1" hint="PNG or JPG, 1:1 ratio" />
         </div>
       </Modal>
