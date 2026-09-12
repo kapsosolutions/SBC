@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
+import { Loader } from '../../components/Spinner.jsx';
 import { api, getToken, clearToken } from '../../api.js';
 
 const TABS = [
@@ -48,6 +49,7 @@ export default function PartnerPanel() {
 
       <main className="panel-main">
         {error && <div className="alert alert-error">{error}</div>}
+        {tab === 'dashboard' && !dash && !error && <Loader label="Loading dashboard…" />}
 
         {tab === 'dashboard' && dash && (
           <div>

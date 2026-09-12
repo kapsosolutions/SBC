@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
+import { Loader } from '../../components/Spinner.jsx';
 
 const KEYS = ['silver', 'gold', 'platinum'];
 
@@ -7,13 +8,14 @@ export default function PlansTab() {
   const [plans, setPlans] = useState({});
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const load = () =>
     api.get('/api/plans/all', 'admin').then((list) => {
       const map = {};
       for (const p of Array.isArray(list) ? list : []) map[p.key] = p;
       setPlans(map);
-    }).catch((e) => setError(e.message));
+    }).catch((e) => setError(e.message)).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
   const set = (key, field) => (e) => {
@@ -46,7 +48,9 @@ export default function PlansTab() {
       {error && <div className="alert alert-error mt-16">{error}</div>}
       {msg && <div className="alert alert-ok mt-16">{msg}</div>}
 
-      <div className="grid grid-3 mt-24">
+      {loading && <Loader label="Loading plans…" />}
+
+      <div className="grid grid-3 mt-24" style={{ display: loading ? 'none' : undefined }}>
         {KEYS.map((key) => {
           const p = plans[key] || { key };
           return (

@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../components/Nav.jsx';
+import { Loader } from '../components/Spinner.jsx';
 import { api, getToken } from '../api.js';
 
 export default function Home() {
   const [plans, setPlans] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [loadingPartners, setLoadingPartners] = useState(true);
   const loggedIn = !!getToken('student');
 
   useEffect(() => {
-    api.get('/api/plans').then((d) => setPlans(Array.isArray(d) ? d : [])).catch(() => {});
-    api.get('/api/partners').then((d) => setPartners(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/api/plans').then((d) => setPlans(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoadingPlans(false));
+    api.get('/api/partners').then((d) => setPartners(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoadingPartners(false));
   }, []);
 
   return (
@@ -60,8 +63,8 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            {plans.length === 0 && <p className="muted">Plans loading…</p>}
           </div>
+          {loadingPlans && <Loader label="Loading plans…" />}
         </section>
 
         {/* Partners */}
@@ -97,8 +100,9 @@ export default function Home() {
                   <div className="caption">{p.location}</div>
                 </div>
               ))}
-              {partners.length === 0 && <p className="muted">Partners coming soon.</p>}
+              {!loadingPartners && partners.length === 0 && <p className="muted">Partners coming soon.</p>}
             </div>
+            {loadingPartners && <Loader label="Loading partners…" />}
           </div>
         </section>
 

@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
+import { Loader } from '../../components/Spinner.jsx';
 
 export default function FlowImagesTab() {
   const [images, setImages] = useState([]);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const load = () =>
-    api.get('/api/flow-images', 'admin').then((d) => setImages(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
+    api.get('/api/flow-images', 'admin')
+      .then((d) => setImages(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
   const upload = async (key, file) => {
@@ -47,6 +52,8 @@ export default function FlowImagesTab() {
         auto-cropped to 8:1. Changes apply instantly (no republish needed).
       </p>
       {error && <div className="alert alert-error mt-16">{error}</div>}
+
+      {loading && <Loader label="Loading images…" />}
 
       {groups.map((g) => (
         <div key={g} className="mt-24">

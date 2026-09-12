@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from '../components/Nav.jsx';
+import { Loader } from '../components/Spinner.jsx';
 import { api, getToken } from '../api.js';
 
 export default function Dashboard() {
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const scrollToCard = () => cardRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   if (error) return (<><Nav /><div className="container section"><div className="alert alert-error">{error}</div></div></>);
-  if (!me) return (<><Nav /><div className="container section"><p className="muted">Loading…</p></div></>);
+  if (!me) return (<><Nav /><Loader label="Loading your dashboard…" /></>);
 
   const activated = me.registered;
 

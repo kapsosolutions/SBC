@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
 import Modal from '../../components/Modal.jsx';
 import ImageUpload from '../../components/ImageUpload.jsx';
+import { Loader } from '../../components/Spinner.jsx';
 
 export default function CategoriesTab() {
   const [cats, setCats] = useState([]);
@@ -10,9 +11,13 @@ export default function CategoriesTab() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = () =>
-    api.get('/api/categories/all', 'admin').then((d) => setCats(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
+    api.get('/api/categories/all', 'admin')
+      .then((d) => setCats(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
   const openAdd = () => {
@@ -62,7 +67,9 @@ export default function CategoriesTab() {
 
       {error && !open && <div className="alert alert-error mt-16">{error}</div>}
 
-      <div className="grid grid-4 mt-24">
+      {loading && <Loader label="Loading categories…" />}
+
+      <div className="grid grid-4 mt-24" style={{ display: loading ? 'none' : undefined }}>
         {cats.map((c) => (
           <div className="card" key={c._id}>
             {c.imageUrl ? (

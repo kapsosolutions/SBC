@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api.js';
+import { Loader } from '../../components/Spinner.jsx';
 
 export default function StudentsTab() {
   const [students, setStudents] = useState([]);
@@ -7,9 +8,13 @@ export default function StudentsTab() {
   const [prize, setPrize] = useState({ title: '', detail: '' });
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const load = () =>
-    api.get('/api/students', 'admin').then((d) => setStudents(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
+    api.get('/api/students', 'admin')
+      .then((d) => setStudents(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
   const openStudent = async (s) => {
@@ -147,6 +152,9 @@ export default function StudentsTab() {
         />
       </div>
 
+      {loading && <Loader label="Loading students…" />}
+
+      {!loading && (
       <div className="card mt-16">
         <h2 className="subheading">All students ({filtered.length})</h2>
         <table className="table mt-16">
@@ -169,6 +177,7 @@ export default function StudentsTab() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

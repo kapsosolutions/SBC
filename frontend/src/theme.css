@@ -758,3 +758,40 @@ img {
   border-radius: 9999px;
   transition: width 0.3s ease;
 }
+
+/* ---------- Spinner (Uiverse by AqFox, recolored to brand green) ---------- */
+.spinner {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  border: 4px solid #0000;
+  border-radius: 50%;
+  border-right-color: #8fe610; /* readable green on white (brand lime family) */
+  animation: spinner-a4dj62 1s infinite linear;
+}
+.spinner::before,
+.spinner::after {
+  content: '';
+  grid-area: 1/1;
+  margin: 2px;
+  border: inherit;
+  border-radius: 50%;
+  animation: spinner-a4dj62 2s infinite;
+}
+.spinner::after {
+  margin: 8px;
+  animation-duration: 3s;
+}
+@keyframes spinner-a4dj62 {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  width: 100%;
+}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api.js';
 import Modal from '../../components/Modal.jsx';
 import ImageUpload from '../../components/ImageUpload.jsx';
+import { Loader } from '../../components/Spinner.jsx';
 
 const DEFAULT_PW = 'Sbc@1234';
 
@@ -55,8 +56,12 @@ export default function PartnersTab() {
   const [filterCat, setFilterCat] = useState('');
   const [revealId, setRevealId] = useState(null);
 
+  const [loading, setLoading] = useState(true);
   const load = () =>
-    api.get('/api/partners/all', 'admin').then((d) => setPartners(Array.isArray(d) ? d : [])).catch((e) => setError(e.message));
+    api.get('/api/partners/all', 'admin')
+      .then((d) => setPartners(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   useEffect(() => {
     load();
     api.get('/api/categories/all', 'admin').then((d) => setCategories(Array.isArray(d) ? d : [])).catch(() => {});
@@ -175,6 +180,9 @@ export default function PartnersTab() {
         </select>
       </div>
 
+      {loading && <Loader label="Loading partners…" />}
+
+      {!loading && (
       <div className="card mt-16">
         <h2 className="subheading">Partners ({filtered.length})</h2>
         <table className="table mt-16">
@@ -227,6 +235,7 @@ export default function PartnersTab() {
           </tbody>
         </table>
       </div>
+      )}
 
       <Modal
         open={open}
