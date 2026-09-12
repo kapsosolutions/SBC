@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../components/Nav.jsx';
-import { api } from '../api.js';
+import { api, getToken } from '../api.js';
 
 export default function Home() {
   const [plans, setPlans] = useState([]);
   const [partners, setPartners] = useState([]);
+  const loggedIn = !!getToken('student');
 
   useEffect(() => {
     api.get('/api/plans').then((d) => setPlans(Array.isArray(d) ? d : [])).catch(() => {});
@@ -28,8 +29,14 @@ export default function Home() {
               partner network. Scan, save, repeat.
             </p>
             <div className="row center mt-24" style={{ justifyContent: 'center' }}>
-              <Link to="/register" className="btn btn-primary">Get your card</Link>
-              <Link to="/login" className="btn">I already have one</Link>
+              {loggedIn ? (
+                <Link to="/dashboard" className="btn btn-primary">Go to my dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn btn-primary">Get your card</Link>
+                  <Link to="/login" className="btn">I already have one</Link>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -45,7 +52,11 @@ export default function Home() {
                   <div className="pill pill-black">{p.title}</div>
                   <div className="display mt-16" style={{ fontSize: 44 }}>₹{p.price}</div>
                   <p className="muted body mt-8">{p.description}</p>
-                  <Link to="/register" className="btn btn-block mt-24">Select {p.title}</Link>
+                  {loggedIn ? (
+                    <Link to="/dashboard" className="btn btn-block mt-24">Go to dashboard</Link>
+                  ) : (
+                    <Link to="/register" className="btn btn-block mt-24">Select {p.title}</Link>
+                  )}
                 </div>
               </div>
             ))}
